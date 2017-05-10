@@ -54,8 +54,12 @@ module RiceSandwich
       attributes << Attribute.new( self, type.to_s, name.to_s)
     end
 
-    def method s
-      @methods << s.to_s
+    def method name, ruby_name=nil
+      m = Method.new
+      m.name = name.to_s
+      m.ruby_name = ruby_name.to_s
+      
+      @methods << m
     end
     
     
@@ -148,16 +152,16 @@ module RiceSandwich
       s += di + "// Method delegation" + eol
       methods.each do |m|
         s += di + "template <typename R, typename ...Args>"+ eol
-        s += di + "R delegate_#{m}( Args... args)" + eol
+        s += di + "R delegate_#{m.name}( Args... args)" + eol
         s += pi + "{" + eol
-        s += di + "return (*this)->#{m}(args...);" + eol
+        s += di + "return (*this)->#{m.name}(args...);" + eol
         s += mi + "}" + eol
         s += eol
 
         s += di + "template <typename T, typename R, typename ...Args>" + eol
-        s += di + "static auto get_delegate_#{m}(R (T::*mf)(Args...))" + eol
+        s += di + "static auto get_delegate_#{m.name}(R (T::*mf)(Args...))" + eol
         s += di + "{" + eol
-        s += di + "return &#{handle_name}::delegate_#{m}<R, Args...>;" + eol
+        s += di + "return &#{handle_name}::delegate_#{m.name}<R, Args...>;" + eol
         s += di + "}" + eol
         s += eol
       end
@@ -196,7 +200,7 @@ module RiceSandwich
       end
 
       methods.each do |m|
-        s += di + "data_type.define_method(#{dquote(m)}, get_delegate_#{m}(&#{class_name}::#{m}) );" + eol
+        s += di + "data_type.define_method(#{dquote(m.ruby_name)}, get_delegate_#{m.name}(&#{class_name}::#{m}) );" + eol
       end
       
       s += mi + "}" + eol + eol
