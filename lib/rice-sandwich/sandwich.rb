@@ -4,6 +4,7 @@ module RiceSandwich
   def self.make &block
     w = Wrap.new
     w.instance_exec &block
+    return w
   end
   
   
@@ -41,18 +42,20 @@ module RiceSandwich
     
     # DSL
     
-    def attr type, name
-      attributes << Attribute.new( self, type, name)
+    def under s
+      @under << s.to_s
     end
-
 
     def klass name
       @class_name = name.to_s
     end
 
-    
-    def under s
-      @under << s.to_s
+    def attr type, name
+      attributes << Attribute.new( self, type.to_s, name.to_s)
+    end
+
+    def method s
+      @methods << s.to_s
     end
     
     
@@ -128,7 +131,7 @@ module RiceSandwich
 
       s += eol
       s += di + "// Installs ruby binding" + eol
-      s += di + "static void install();" + eol
+      s += di + "static void bind_to_ruby();" + eol
       s += eol
       s += di + "// Make both the underlying object and the handle" + eol
       s += di + "static #{handle_name} make();" + eol
@@ -140,15 +143,35 @@ module RiceSandwich
         s += a.getter_decl
       end
 
+      # Method delegation
+      s += eol
+      s += di + "// Method delegation" + eol
+      methods.each do |m|
+        s += di + "template <typename R, typename ...Args>"+ eol
+        s += di + "R delegate_#{m}( Args... args)" + eol
+        s += pi + "{" + eol
+        s += di + "return (*this)->#{m}(args...);" + eol
+        s += mi + "}" + eol
+        s += eol
+
+        s += di + "template <typename T, typename R, typename ...Args>" + eol
+        s += di + "static auto get_delegate_#{m}(R (T::*mf)(Args...))" + eol
+        s += di + "{" + eol
+        s += di + "return &#{handle_name}::delegate_#{m}<R, Args...>;" + eol
+        s += di + "}" + eol
+        s += eol
+      end
+
+      
       s += mi + "};" + eol
       s
     end
 
 
 
-    def handle_install
+    def handle_bind_to_ruby
       s = ""
-      s += di + "void #{handle_name}::install()" + eol
+      s += di + "void #{handle_name}::bind_to_ruby()" + eol
       s += pi + "{" + eol
       s += di + "using namespace Rice;" + eol + eol
       
@@ -171,6 +194,10 @@ module RiceSandwich
         s += di + "data_type.define_method(#{dquote(a.name)}, &#{handle_name}::#{a.getter});" + eol
         s += di + "data_type.define_method(#{dquote(a.name.to_s + "=")}, &#{handle_name}::#{a.setter});" + eol
       end
+
+      methods.each do |m|
+        s += di + "data_type.define_method(#{dquote(m)}, get_delegate_#{m}(&#{class_name}::#{m}) );" + eol
+      end
       
       s += mi + "}" + eol + eol
       s
@@ -192,8 +219,16 @@ module RiceSandwich
       s += di + "#{handle_name}::#{handle_name}(const #{handle_name} &other) : Ptr(other) {}" + eol
       s += di + "#{handle_name}::#{handle_name}(Ptr &other) : Ptr(other) {}" + eol
       s += di + "#{handle_name}::#{handle_name}(#{class_name} *obj) : Ptr(obj) {}" + eol
+      s += eol
 
-      s += handle_install
+      s += di + "#{handle_name} #{handle_name}::make()" + eol
+      s += pi + "{" + eol
+      s += di + "return #{handle_name}(new #{class_name}());" + eol
+      s += mi + "}" + eol
+      s += eol
+      
+
+      s += handle_bind_to_ruby
       
       attributes.each do |a|
         s += a.setter_impl
@@ -203,11 +238,20 @@ module RiceSandwich
       s
     end
 
+    
+    def built_src_dir
+      if $built_source_dir.nil? then
+        return "./"
+      end
+      return $built_source_dir + "/"
+    end
+    
 
     def write_files
-      File.write base_name.snake_case + ".hpp", base_hpp
-      File.write handle_name.snake_case + ".hpp", handle_hpp
-      File.write handle_name.snake_case + ".cpp", handle_cpp
+      print "Writing files to #{built_src_dir}\n"
+      File.write built_src_dir + base_name.snake_case + ".hpp", base_hpp
+      File.write built_src_dir + handle_name.snake_case + ".hpp", handle_hpp
+      File.write built_src_dir + handle_name.snake_case + ".cpp", handle_cpp
     end
     
 
