@@ -105,7 +105,7 @@ RiceSandwich defines a construction class within the Handle class that
 instantiates the implementation.  Calling .new on your Ruby class
 thus works as expected.
 
-## Make
+## ::make
 
 The Handle class provides a static _make_ method as convenience.
 
