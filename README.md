@@ -50,6 +50,8 @@ methods.  The method delegates are constructed using a bit of template
 hackery so that one doesn't need the method signature in the DSL, just
 the method name.
 
+The Handle class defines the static member function _bind_to_ruby()_.
+This makes all of the Rice registration calls in one handy place.
 
 ## Example of using the DSL
 
@@ -89,6 +91,24 @@ can use it just like you'd use any other shared pointer.
 
 MyClassHandle provides a static bind_to_ruby method.  You call this in
 your extension's init routine.
+
+# The Handle class
+
+## Constructors
+
+The default C++ Handle constructor results in a nullptr.  This usually
+what you want in C++.  However, when you call _new_ in Ruby, you want
+the backing implementation to be instantiated.
+
+Rice uses a Constructor object in setting up the Ruby binding.
+RiceSandwich defines a construction class within the Handle class that
+instantiates the implementation.  Calling .new on your Ruby class
+thus works as expected.
+
+## Make
+
+The Handle class provides a static _make_ method as convenience.
+
 
 # DSL
 
