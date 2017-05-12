@@ -14,11 +14,13 @@ module RiceSandwich
     attr_accessor :methods
 
     attr_accessor :system_headers
+    attr_accessor :headers
 
     def initialize
       @attributes = Array.new
       @methods = Array.new
       @under = Array.new
+      @headers = Array.new
       
       init_system_headers
     end
@@ -57,7 +59,7 @@ module RiceSandwich
     def method name, ruby_name=nil
       m = Method.new
       m.name = name.to_s
-      m.ruby_name = ruby_name.to_s
+      m.ruby_name = ruby_name.to_s unless ruby_name.nil?
       
       @methods << m
     end
@@ -78,6 +80,13 @@ module RiceSandwich
     def base_hpp
       guard "_#{base_name.snake_case}_hpp_".upcase do
         s = ""
+        s += eol
+
+        headers.each do |h|
+          s += %Q{#include "#{h}"} + eol
+        end
+        s += eol
+
         s += base_decl
         s
       end
@@ -200,7 +209,7 @@ module RiceSandwich
       end
 
       methods.each do |m|
-        s += di + "data_type.define_method(#{dquote(m.ruby_name)}, get_delegate_#{m.name}(&#{class_name}::#{m}) );" + eol
+        s += di + "data_type.define_method(#{dquote(m.ruby_name)}, get_delegate_#{m.name}(&#{class_name}::#{m.name}) );" + eol
       end
       
       s += mi + "}" + eol + eol
