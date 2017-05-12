@@ -1,4 +1,5 @@
-# rice-sandwich
+# Synopsis
+
 Generate C++ boilerplate for Ruby's Rice interface
 
 # Motivation
@@ -12,6 +13,43 @@ delegation routines was a bit too much.
 
 The idea is to use a Domain Specific Language (written in Ruby of
 course) to handle most of the tedious work.
+
+## The Handle/Body pattern
+
+Note: this is also referred to as the _pointer-to-implementation_ design pattern.
+
+When writing C++ that plays nicely with Ruby, you can find that your
+code is using relatively simple objects that have pointers to other
+simple objects.  While Rice is really useful, one area that is
+problematic is that lack of integration with Ruby's garbage collector.
+A solution is to use smart pointers (C++ std::shared_ptr) pretty much
+everywhere.
+
+In order for this to work, the C++ class being registered with Ruby
+isn't the implementation, it is the smart pointer (aka Handle).  Rice
+has nice ways of registering methods on a class but doesn't seem to
+understand delegating through a smart pointer.  One has to have
+delegation methods defined in the handle class so that the calls are
+forwarded to the implementation class.
+
+## How does Rice-sandwich help?
+
+Using a simple description, rice-sandwich generates C++ code for both
+a Base class and a Handle class.  One writes an implementation class
+which is derived from the Base class and whose methods are called by
+the Handle class.  The implementation is "sandwiched" between the Base
+and Handle.
+
+The base class contains just the Ruby-accessible data members (aka
+attributes) for the class.  Setter and getter methods are placed in
+the Handle class.
+
+The Handle class is derived from std::shared_ptr<>.  As mentioned, it
+has the accessor methods plus delegates for the implementation
+methods.  The method delegates are constructed using a bit of template
+hackery so that one doesn't need the method signature in the DSL, just
+the method name.
+
 
 ## Example of using the DSL
 
@@ -51,6 +89,20 @@ can use it just like you'd use any other shared pointer.
 
 MyClassHandle provides a static bind_to_ruby method.  You call this in
 your extension's init routine.
+
+# DSL
+
+## Keywords
+
+* under
+* klass
+* attr
+* method
+
+## Variables
+
+* system_headers
+* headers
 
 # Integrating with MakeMakefile (mkmf-rice and extconf.rb)
 
