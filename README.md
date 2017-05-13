@@ -119,6 +119,61 @@ The Handle class provides a static _make_ method as convenience.
 * attr
 * method
 
+### under
+
+```ruby
+under :MyModule
+```
+
+The class will be registered under module *MyModule*.
+
+### klass
+
+
+```ruby
+klass :MyClass
+```
+
+The name of the class being defined.
+
+### attr
+
+
+```ruby
+attr :int, :my_int
+attr :MyClassHandle, :handle_to_another_object
+```
+
+Defines an attribute.
+
+### method
+
+```ruby
+method :my_method
+method :my_method, :ruby_method_name
+method :array_reader, :[]
+method :array_writer, :[]=
+```
+
+Binds a user-defined method.  It takes an optional argument for the ruby method name.
+
+### system_headers
+
+Shift in any extra system headers you need included.
+
+```ruby
+system_headers << "some_system_header.hpp"
+```
+
+### headers
+
+Shift in any extra user headers you need included.
+
+```ruby
+headers << "some_user_header.hpp"
+```
+
+
 ## Variables
 
 * system_headers
