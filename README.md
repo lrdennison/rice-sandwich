@@ -157,6 +157,11 @@ method :array_writer, :[]=
 
 Binds a user-defined method.  It takes an optional argument for the ruby method name.
 
+## Variables
+
+* system_headers
+* headers
+
 ### system_headers
 
 Shift in any extra system headers you need included.
@@ -173,11 +178,6 @@ Shift in any extra user headers you need included.
 headers << "some_user_header.hpp"
 ```
 
-
-## Variables
-
-* system_headers
-* headers
 
 # Integrating with MakeMakefile (mkmf-rice and extconf.rb)
 
